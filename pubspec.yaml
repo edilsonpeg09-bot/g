@@ -1,0 +1,23 @@
+name: roxo_shop
+description: Demo Android do Roxo Shop - loja e missões fictícias.
+publish_to: none
+version: 0.1.0+1
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+dependencies:
+  flutter:
+    sdk: flutter
+  google_mobile_ads: ^6.0.0
+dev_dependencies:
+  flutter_launcher_icons: ^0.14.4
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/icon.png
+    - assets/images/banner.png
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: assets/images/icon.png
+  adaptive_icon_background: '#09090F'
+  adaptive_icon_foreground: assets/images/icon.png

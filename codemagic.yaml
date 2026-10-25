@@ -1,0 +1,20 @@
+workflows:
+  roxo-shop-android-teste:
+    name: Roxo Shop - Android APK de teste
+    max_build_duration: 60
+    instance_type: linux_x2
+    environment:
+      flutter: stable
+    scripts:
+      - name: Criar plataforma Android
+        script: flutter create --platforms=android --org com.roxoshop .
+      - name: Preparar Android e AdMob de teste
+        script: python3 preparar_android.py
+      - name: Instalar dependencias
+        script: flutter pub get
+      - name: Gerar icone
+        script: dart run flutter_launcher_icons
+      - name: Compilar APK de teste
+        script: flutter build apk --debug
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
