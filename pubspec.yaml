@@ -1,13 +1,14 @@
 name: roxo_shop
-description: Demo Android do Roxo Shop - loja e missões fictícias.
+description: Roxo Shop - loja, atalhos de alertas V-Bucks e minha conta.
 publish_to: none
-version: 0.1.0+1
+version: 0.3.0+3
 environment:
   sdk: '>=3.3.0 <4.0.0'
 dependencies:
   flutter:
     sdk: flutter
   google_mobile_ads: ^7.0.0
+  url_launcher: ^6.3.2
 dev_dependencies:
   flutter_launcher_icons: ^0.14.4
 flutter:

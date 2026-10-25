@@ -1,43 +1,27 @@
-# Roxo Shop — APK de teste Android
+# Roxo Shop 0.3.0 — TESTE, NÃO PUBLICAR COMO FINAL
 
-**Estado:** projeto-fonte Flutter, ainda **não compilado nem validado**. O arquivo APK não está incluído.
+## O que contém
+- Quatro abas: Loja, Salve o Mundo (link do FortniteDB), Minha Conta (link oficial Epic) e Ajustes.
+- Atalho para resultados de busca no YouTube sobre Fortnite e Salve o Mundo (não é um canal oficial nem vídeos incorporados).
+- Banner AdMob de TESTE e intersticial AdMob de TESTE. Intersticial somente após no mínimo 3 mudanças de abas, limitado a uma tentativa a cada 10 minutos, se anúncio estiver carregado. O tempo e o botão Fechar são controlados pelo SDK do Google. Sem cronômetro ou fechamento falso.
+- Dragão e paleta preto/roxo, ícone e banner.
 
-Contém: identidade com dragão roxo, banner gráfico da marca, 3 abas, filtros de missões fictícias, banner de anúncios **oficial de teste**. Não conecta dados reais da loja nem alertas e não gera dinheiro.
+## O que NÃO contém
+- API de loja sincronizada no próprio aplicativo: a Loja abre a página oficial externa.
+- Consulta real dos V-Bucks gastos: nenhuma API autorizada foi confirmada; a aba da conta abre páginas oficiais e mostra “não disponível”.
+- Aviso automático às 21h: ainda precisa de backend ou integração de notificações. Não informa falsamente que há V-Bucks.
+- Anúncios que geram receita: apenas IDs públicos OFICIAIS DE TESTE do Google, inclusive no AndroidManifest. NÃO substitua por IDs reais antes de resolver políticas, autorizações e consentimento.
 
-## Gerar o APK no Windows
+## Codemagic
+1. Extraia o ZIP. Substitua os arquivos existentes na raiz do repositório no GitHub (inclusive `lib/main.dart`, `pubspec.yaml` e `README.md`), faça Commit na branch `main`.
+2. Codemagic → projeto `g` → Start new build → `main` → Roxo Shop - Android APK de teste.
+3. Quando terminar, baixe `app-debug.apk` em Artifacts e instale no Android.
 
-1. Instale Flutter SDK e Android Studio com Android SDK; confirme com `flutter doctor`.
-2. Extraia este ZIP, abra um terminal **na pasta que contém pubspec.yaml**.
-3. Execute estes comandos, um por vez:
+`codemagic.yaml` cria a plataforma Android automaticamente e executa `preparar_android.py` para inserir o App ID oficial de teste do AdMob no manifest.
 
-```powershell
-flutter create --platforms=android --org com.roxoshop .
-python preparar_android.py
-flutter pub get
-dart run flutter_launcher_icons
-flutter build apk --debug
-```
+## Limitações antes de publicação
+Necessários: autorização apropriada para uso/monetização de conteúdo do Fortnite, revisão das políticas AdMob e Google Play, política de privacidade e consentimento, verificação de marca/nome, dados autorizados, testes no dispositivo e assinatura AAB release. Sem autorização comercial da Epic, não ativar monetização.
 
-Se o comando `python` não existir no Windows, use `py preparar_android.py`.
-
-4. Encontre `build/app/outputs/flutter-apk/app-debug.apk`; renomeie uma **cópia** para `RoxoShop-teste.apk` se quiser.
-5. Instale arrastando o APK para o BlueStacks, ou conecte o telefone com depuração USB e execute `flutter install`.
-
-## AdMob
-
-O projeto usa **somente** IDs oficiais de TESTE Android do Google, inclusive no Manifest. O ID real do aplicativo (`ca-app-pub-2459248219163601~9796068658`) e do banner (`ca-app-pub-2459248219163601/4839255446`) **não estão ativos**. Nenhuma receita é gerada. Não use anúncios comerciais até verificar aprovação, conformidade legal/política de conteúdo e autorização comercial da Epic. Consulte: https://legal.epicgames.com/epicgames/fan-art-policy
-
-## Publicação
-
-Antes de publicar são necessários: fontes de dados autorizadas e funcionais, permissão/licença de uso comercial para quaisquer recursos do Fortnite, política de privacidade, consentimento sobre anúncios quando aplicável, testes Android, e assinatura release/App Bundle.
-
-A identidade do dragão foi criada para este protótipo. O nome Roxo Shop ainda precisa de verificação de disponibilidade e marcas.
-
-## Gerar APK online no Codemagic
-
-1. Crie um repositório **privado** no GitHub (por exemplo, `roxo-shop`) e envie **todos os arquivos da raiz deste projeto** ao nível principal do repositório; `pubspec.yaml` e `codemagic.yaml` devem aparecer lado a lado na página inicial do repositório.
-2. No Codemagic, selecione o repositório e a branch `main`, abra `codemagic.yaml` e clique em **Check for configuration files**.
-3. Selecione o workflow **Roxo Shop - Android APK de teste** e inicie o build.
-4. Ao finalizar com sucesso, baixe o APK em **Artifacts**. Esse é um APK de testes, sem anúncios comerciais.
-
-O workflow cria a pasta Android automaticamente; não é preciso enviá-la ao GitHub. Se houver erros de versão de Flutter, Gradle ou plugins, será necessário revisar o log da compilação.
+## Fontes AdMob
+https://developers.google.com/admob/flutter/interstitial
+https://developers.google.com/admob/flutter/banner
