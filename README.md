@@ -1,27 +1,23 @@
-# Roxo Shop 0.3.0 — TESTE, NÃO PUBLICAR COMO FINAL
+# Roxo Shop v0.4 — Loja e Salve o Mundo dentro do app
 
-## O que contém
-- Quatro abas: Loja, Salve o Mundo (link do FortniteDB), Minha Conta (link oficial Epic) e Ajustes.
-- Atalho para resultados de busca no YouTube sobre Fortnite e Salve o Mundo (não é um canal oficial nem vídeos incorporados).
-- Banner AdMob de TESTE e intersticial AdMob de TESTE. Intersticial somente após no mínimo 3 mudanças de abas, limitado a uma tentativa a cada 10 minutos, se anúncio estiver carregado. O tempo e o botão Fechar são controlados pelo SDK do Google. Sem cronômetro ou fechamento falso.
-- Dragão e paleta preto/roxo, ícone e banner.
+Este pacote mantém a identidade preto/roxo, anúncios **somente de teste**, Minha Conta e Ajustes. A aba **Loja** agora carrega a página oficial `https://www.fortnite.com/item-shop` dentro de uma WebView. A aba **V-Bucks** carrega a página filtrada do FortniteDB em outra WebView. Não há mais redirecionamento automático para o navegador nessas abas.
 
-## O que NÃO contém
-- API de loja sincronizada no próprio aplicativo: a Loja abre a página oficial externa.
-- Consulta real dos V-Bucks gastos: nenhuma API autorizada foi confirmada; a aba da conta abre páginas oficiais e mostra “não disponível”.
-- Aviso automático às 21h: ainda precisa de backend ou integração de notificações. Não informa falsamente que há V-Bucks.
-- Anúncios que geram receita: apenas IDs públicos OFICIAIS DE TESTE do Google, inclusive no AndroidManifest. NÃO substitua por IDs reais antes de resolver políticas, autorizações e consentimento.
+As páginas exibidas continuam pertencendo a seus respectivos provedores. **Não é uma integração de API** e não foi possível garantir que ambos os sites permitam o carregamento dentro de WebView: poderão bloquear, exigir cookies, ou exibir um layout próprio. Em caso de erro, o usuário tem botões para recarregar ou abrir no navegador. Consulte os termos e obtenha permissões para distribuição/monetização de conteúdo de terceiros.
 
-## Codemagic
-1. Extraia o ZIP. Substitua os arquivos existentes na raiz do repositório no GitHub (inclusive `lib/main.dart`, `pubspec.yaml` e `README.md`), faça Commit na branch `main`.
-2. Codemagic → projeto `g` → Start new build → `main` → Roxo Shop - Android APK de teste.
-3. Quando terminar, baixe `app-debug.apk` em Artifacts e instale no Android.
+## Gerar APK no Codemagic
 
-`codemagic.yaml` cria a plataforma Android automaticamente e executa `preparar_android.py` para inserir o App ID oficial de teste do AdMob no manifest.
+1. Extraia este ZIP e envie todos os arquivos à raiz do repositório GitHub `g`, substituindo os anteriores. Envie as pastas `assets` e `lib` com seu conteúdo.
+2. Faça commit na branch `main`.
+3. Codemagic > projeto `g` > Start new build > workflow `Roxo Shop - Android APK de teste`.
+4. Ao concluir, baixe `app-debug.apk` em Artifacts.
 
-## Limitações antes de publicação
-Necessários: autorização apropriada para uso/monetização de conteúdo do Fortnite, revisão das políticas AdMob e Google Play, política de privacidade e consentimento, verificação de marca/nome, dados autorizados, testes no dispositivo e assinatura AAB release. Sem autorização comercial da Epic, não ativar monetização.
+O workflow executa: `flutter create --platforms=android --org com.roxoshop .`, `python3 preparar_android.py`, `flutter pub get`, geração do ícone e `flutter build apk --debug`. O script configura permissão `INTERNET` no AndroidManifest e AdMob em modo de teste.
 
-## Fontes AdMob
-https://developers.google.com/admob/flutter/interstitial
-https://developers.google.com/admob/flutter/banner
+## Limitações restantes
+
+- Sem notificações reais automáticas às 21h.
+- Sem consulta autorizada e verificada do total de V-Bucks gastos.
+- Nenhuma monetização real: AdMob usa unidades de teste.
+- A compilação e a renderização de sites **não foram validadas em dispositivo neste ambiente**.
+- Android WebView deve estar atualizado no aparelho.
+- Não implantar ou ativar anúncios comerciais com conteúdos do Fortnite/FortniteDB sem licença ou autorização e aprovação do AdMob.

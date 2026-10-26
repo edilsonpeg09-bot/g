@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -172,7 +173,17 @@ class _HomePageState extends State<HomePage> {
       body: SafeArea(child: Center(child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 600),
         child: IndexedStack(index: page, children: [
-          _shop(), _missions(), _account(), _settings(),
+          const EmbeddedSitePage(
+            title: 'Loja de Itens',
+            url: fortniteShop,
+            sourceName: 'Fortnite — site oficial',
+          ),
+          const EmbeddedSitePage(
+            title: 'Missões com V-Bucks',
+            url: fortniteDbVbucks,
+            sourceName: 'FortniteDB — site de terceiros',
+          ),
+          _account(), _settings(),
         ]),
       ))),
       bottomNavigationBar: SafeArea(top: false, child: Column(
@@ -202,51 +213,6 @@ class _HomePageState extends State<HomePage> {
       )),
     );
   }
-
-  Widget _shop() => ListView(padding: const EdgeInsets.all(16), children: [
-        ClipRRect(borderRadius: BorderRadius.circular(16),
-          child: Image.asset('assets/images/banner.png', fit: BoxFit.fitWidth)),
-        const SizedBox(height: 20),
-        _heading('Loja de Itens', 'Acesse a loja atual diretamente na página oficial do Fortnite.'),
-        const SizedBox(height: 18),
-        _card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Icon(Icons.shopping_bag_outlined, color: lilac, size: 34),
-          const SizedBox(height: 12),
-          const Text('Loja diária', style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const Text('A loja abre no navegador para mostrar informações atualizadas na fonte original.', style: TextStyle(color: dim)),
-          const SizedBox(height: 16),
-          _action('Abrir loja oficial', () => _open(fortniteShop)),
-          const SizedBox(height: 10),
-          _action('Vídeos e novidades no YouTube', () => _open(youtubeSearch), icon: Icons.play_circle_outline),
-        ])),
-        const SizedBox(height: 14),
-        const Text('Uma API própria da loja não foi validada neste projeto. Não exibimos itens fictícios como dados atuais.', style: TextStyle(fontSize: 12, color: dim)),
-      ]);
-
-  Widget _missions() => ListView(padding: const EdgeInsets.all(16), children: [
-        _heading('Alertas de V-Bucks', 'Somente missões do Salve o Mundo com recompensa em V-Bucks.'),
-        const SizedBox(height: 20),
-        _card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Row(children: [
-            Icon(Icons.bolt, color: lilac, size: 30),
-            SizedBox(width: 10),
-            Expanded(child: Text('Missões com V-Bucks', style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold))),
-          ]),
-          const SizedBox(height: 10),
-          const Text('Veja no FortniteDB a missão, a localização, o nível e a quantidade de V-Bucks. O filtro por recompensa já está aplicado no link.', style: TextStyle(color: dim, height: 1.4)),
-          const SizedBox(height: 18),
-          _action('Ver missões de V-Bucks', () => _open(fortniteDbVbucks)),
-        ])),
-        const SizedBox(height: 14),
-        _card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Avisos de atualização', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 8),
-          const Text('A conferência das missões às 21h e as notificações automáticas ainda precisam de um serviço de verificação e envio. Não vamos anunciar V-Bucks sem confirmação.', style: TextStyle(color: dim, height: 1.45)),
-          const SizedBox(height: 12),
-          TextButton.icon(onPressed: () => _open(fortniteDb), icon: const Icon(Icons.language), label: const Text('Abrir FortniteDB')),
-        ])),
-      ]);
 
   Widget _account() => ListView(padding: const EdgeInsets.all(16), children: [
         _heading('Minha Conta', 'Acesse sua conta Epic Games pelo site oficial, com segurança.'),
@@ -287,7 +253,132 @@ class _HomePageState extends State<HomePage> {
           ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.palette_outlined, color: lilac), title: Text('Tema'), subtitle: Text('Preto e roxo')),
           ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.ads_click, color: lilac), title: Text('Anúncios'), subtitle: Text('Banners e anúncios de tela cheia de teste — sem receita')),
           ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.notifications_none, color: lilac), title: Text('Notificações'), subtitle: Text('Ainda não implementadas — exigem serviço de alertas')),
-          ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.info_outline, color: lilac), title: Text('Versão'), subtitle: Text('0.3.0 (teste)')),
+          ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.info_outline, color: lilac), title: Text('Versão'), subtitle: Text('0.4.0 (teste)')),
         ])),
       ]);
+}
+
+
+/// Mostra a página original dentro do aplicativo, sem copiar seu conteúdo.
+/// Se o provedor bloquear WebView, oferece abertura externa explícita.
+class EmbeddedSitePage extends StatefulWidget {
+  final String title;
+  final String url;
+  final String sourceName;
+  const EmbeddedSitePage({
+    super.key,
+    required this.title,
+    required this.url,
+    required this.sourceName,
+  });
+
+  @override
+  State<EmbeddedSitePage> createState() => _EmbeddedSitePageState();
+}
+
+class _EmbeddedSitePageState extends State<EmbeddedSitePage> {
+  late final WebViewController _controller;
+  int _progress = 0;
+  String? _error;
+  bool _canBack = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(bg)
+      ..setNavigationDelegate(NavigationDelegate(
+        onProgress: (progress) {
+          if (mounted) setState(() => _progress = progress);
+        },
+        onPageStarted: (_) {
+          if (mounted) setState(() { _error = null; _progress = 0; });
+        },
+        onPageFinished: (_) async {
+          final back = await _controller.canGoBack();
+          if (mounted) setState(() { _progress = 100; _canBack = back; });
+        },
+        onWebResourceError: (error) {
+          if (error.isForMainFrame == true && mounted) {
+            setState(() => _error = 'Não foi possível carregar esta página dentro do aplicativo.');
+          }
+        },
+        onNavigationRequest: (request) {
+          final uri = Uri.tryParse(request.url);
+          if (uri == null) return NavigationDecision.prevent;
+          // Evita navegar para esquemas não HTTP e aplicativos externos silenciosamente.
+          if (uri.scheme != 'https' && uri.scheme != 'http') {
+            return NavigationDecision.prevent;
+          }
+          return NavigationDecision.navigate;
+        },
+      ))
+      ..loadRequest(Uri.parse(widget.url));
+  }
+
+  Future<void> _external() async {
+    final ok = await launchUrl(Uri.parse(widget.url), mode: LaunchMode.externalApplication);
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível abrir no navegador.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        color: panel,
+        child: Row(children: [
+          IconButton(
+            tooltip: 'Voltar na página',
+            onPressed: _canBack ? () async {
+              await _controller.goBack();
+              final back = await _controller.canGoBack();
+              if (mounted) setState(() => _canBack = back);
+            } : null,
+            icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+          ),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(widget.title, maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w700)),
+            Text(widget.sourceName, maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: dim, fontSize: 11)),
+          ])),
+          IconButton(
+            tooltip: 'Atualizar',
+            onPressed: () => _controller.reload(),
+            icon: const Icon(Icons.refresh, color: lilac),
+          ),
+          IconButton(
+            tooltip: 'Abrir no navegador',
+            onPressed: _external,
+            icon: const Icon(Icons.open_in_browser, size: 22),
+          ),
+        ]),
+      ),
+      if (_progress < 100) LinearProgressIndicator(value: _progress / 100,
+        minHeight: 2, color: lilac, backgroundColor: panel),
+      Expanded(child: Stack(children: [
+        Positioned.fill(child: WebViewWidget(controller: _controller)),
+        if (_error != null) Positioned.fill(child: Container(
+          color: bg,
+          padding: const EdgeInsets.all(24),
+          child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.wifi_off, size: 40, color: lilac),
+            const SizedBox(height: 12),
+            Text(_error!, textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            FilledButton.icon(onPressed: () => _controller.reload(),
+              icon: const Icon(Icons.refresh), label: const Text('Tentar novamente')),
+            TextButton(onPressed: _external,
+              child: const Text('Abrir no navegador')),
+          ])),
+        )),
+      ])),
+    ],
+  );
 }
