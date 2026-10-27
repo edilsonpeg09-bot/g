@@ -1,3 +1,15 @@
+# Roxo Shop — v0.5 (FortniteDB na aba Salve o Mundo)
+
+Nesta versão a aba Salve o Mundo abre **https://fortnitedb.com/** na WebView interna, em vez do link anterior de filtro de missões. A página inicial também contém outros recursos do FortniteDB além das missões de V-Bucks.
+
+**Importante:** integração por WebView não é uma API nativa nem garante que o site autorize o carregamento no app. O site depende de conexão de internet e pode alterar sua interface. Esta versão não envia notificações inteligentes sobre novas missões; anúncios continuam apenas em modo de teste. O código não foi compilado nem testado em Android nesta sessão.
+
+## Atualizar pelo Codemagic
+
+Extraia o ZIP e carregue os arquivos extraídos na raiz do repositório GitHub (substitua arquivos com o mesmo nome). Depois confirme o commit na `main` e inicie o workflow Android existente no Codemagic.
+
+## Original
+
 # Roxo Shop v0.4 — Loja e Salve o Mundo dentro do app
 
 Este pacote mantém a identidade preto/roxo, anúncios **somente de teste**, Minha Conta e Ajustes. A aba **Loja** agora carrega a página oficial `https://www.fortnite.com/item-shop` dentro de uma WebView. A aba **V-Bucks** carrega a página filtrada do FortniteDB em outra WebView. Não há mais redirecionamento automático para o navegador nessas abas.

@@ -15,8 +15,6 @@ const purple = Color(0xFF7C3AED);
 const lilac = Color(0xFFC084FC);
 const dim = Color(0xFFB8AEC6);
 const fortniteShop = 'https://www.fortnite.com/item-shop';
-// Link permanente fornecido pelo filtro V-Bucks do FortniteDB.
-const fortniteDbVbucks = 'https://fortnitedb.com/all_missions/p/f494b06eff611ab4ca088d78839f0636';
 const fortniteDb = 'https://fortnitedb.com/';
 const epicTransactions = 'https://www.epicgames.com/account/transactions';
 const epicAccount = 'https://www.epicgames.com/account/personal';
@@ -179,8 +177,8 @@ class _HomePageState extends State<HomePage> {
             sourceName: 'Fortnite — site oficial',
           ),
           const EmbeddedSitePage(
-            title: 'Missões com V-Bucks',
-            url: fortniteDbVbucks,
+            title: 'Salve o Mundo — FortniteDB',
+            url: fortniteDb,
             sourceName: 'FortniteDB — site de terceiros',
           ),
           _account(), _settings(),
