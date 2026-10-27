@@ -1,13 +1,12 @@
 name: roxo_shop
 description: Roxo Shop - loja, atalhos de alertas V-Bucks e minha conta.
 publish_to: none
-version: 0.6.0+6
+version: 0.7.0+7
 environment:
   sdk: '>=3.3.0 <4.0.0'
 dependencies:
   flutter:
     sdk: flutter
-  google_mobile_ads: ^7.0.0
   url_launcher: ^6.3.2
   webview_flutter: ^4.13.0
 dev_dependencies:

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await MobileAds.instance.initialize();
   runApp(const RoxoShopApp());
 }
 
@@ -14,14 +12,6 @@ const panel = Color(0xFF18141F);
 const purple = Color(0xFF7C3AED);
 const lilac = Color(0xFFC084FC);
 const dim = Color(0xFFB8AEC6);
-// Por seguranca, anuncios comerciais permanecem desativados.
-// Somente habilitar mediante autorizacoes e aprovacao do app.
-const bool enableLiveAds = bool.fromEnvironment('ENABLE_LIVE_ADS', defaultValue: false);
-const String bannerTestId = 'ca-app-pub-3940256099942544/6300978111';
-const String interstitialTestId = 'ca-app-pub-3940256099942544/1033173712';
-const String bannerProductionId = 'ca-app-pub-2459248219163601/4839255446';
-// Ainda nao temos bloco intersticial comercial registrado: NAO ativar este formato em producao.
-const String interstitialProductionId = '';
 const fortniteShop = 'https://www.fortnite.com/item-shop';
 const fortniteDb = 'https://fortnitedb.com/';
 const epicTransactions = 'https://www.epicgames.com/account/transactions';
@@ -54,82 +44,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int page = 0;
-  BannerAd? _banner;
-  bool _bannerReady = false;
-  InterstitialAd? _interstitial;
-  int _tabChanges = 0;
-  DateTime? _lastInterstitial;
-
-  void _loadInterstitial() {
-    if (_interstitial != null || (enableLiveAds && interstitialProductionId.isEmpty)) return;
-    InterstitialAd.load(
-      adUnitId: enableLiveAds ? interstitialProductionId : interstitialTestId,
-      request: const AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) {
-          if (!mounted) { ad.dispose(); return; }
-          _interstitial = ad;
-          ad.fullScreenContentCallback = FullScreenContentCallback(
-            onAdDismissedFullScreenContent: (ad) {
-              ad.dispose();
-              _interstitial = null;
-              if (mounted) _loadInterstitial();
-            },
-            onAdFailedToShowFullScreenContent: (ad, error) {
-              ad.dispose();
-              _interstitial = null;
-              if (mounted) _loadInterstitial();
-            },
-          );
-        },
-        onAdFailedToLoad: (error) { debugPrint('Interstitial de teste indisponível: $error'); },
-      ),
-    );
-  }
-
   void _switchPage(int value) {
-    if (value == page) return;
-    setState(() => page = value);
-    _tabChanges += 1;
-    // Exibir apenas em transições naturais, nunca ao iniciar o app ou ao clicar em links.
-    // Limitar frequência: pelo menos 3 trocas de aba e intervalo de 10 minutos.
-    final now = DateTime.now();
-    if (_tabChanges >= 3 && _interstitial != null &&
-        (_lastInterstitial == null || now.difference(_lastInterstitial!) >= const Duration(minutes: 10))) {
-      final ad = _interstitial!;
-      _interstitial = null;
-      _lastInterstitial = now;
-      _tabChanges = 0;
-      ad.show();
-    }
-  }
-
-
-  @override
-  void initState() {
-    super.initState();
-    _loadInterstitial();
-    _banner = BannerAd(
-      adUnitId: enableLiveAds ? bannerProductionId : bannerTestId,
-      size: AdSize.banner,
-      request: const AdRequest(),
-      listener: BannerAdListener(
-        onAdLoaded: (ad) {
-          if (mounted) setState(() => _bannerReady = true);
-        },
-        onAdFailedToLoad: (ad, error) {
-          ad.dispose();
-          if (mounted) setState(() { _bannerReady = false; _banner = null; });
-        },
-      ),
-    )..load();
-  }
-
-  @override
-  void dispose() {
-    _banner?.dispose();
-    _interstitial?.dispose();
-    super.dispose();
+    if (value != page) setState(() => page = value);
   }
 
   Future<void> _open(String url) async {
@@ -192,29 +108,18 @@ class _HomePageState extends State<HomePage> {
           _account(), _settings(),
         ]),
       ))),
-      bottomNavigationBar: SafeArea(top: false, child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (_bannerReady && _banner != null && page != 3)
-            Center(child: SizedBox(
-              width: _banner!.size.width.toDouble(),
-              height: _banner!.size.height.toDouble(),
-              child: AdWidget(ad: _banner!),
-            )),
-          NavigationBar(
-            height: 74,
-            backgroundColor: panel,
-            indicatorColor: purple,
-            selectedIndex: page,
-            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-            onDestinationSelected: _switchPage,
-            destinations: const [
-              NavigationDestination(icon: Icon(Icons.shopping_bag_outlined), label: 'Loja'),
-              NavigationDestination(icon: Icon(Icons.bolt_outlined), label: 'V-Bucks'),
-              NavigationDestination(icon: Icon(Icons.person_outline), label: 'Conta'),
-              NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Ajustes'),
-            ],
-          ),
+      bottomNavigationBar: SafeArea(top: false, child: NavigationBar(
+        height: 74,
+        backgroundColor: panel,
+        indicatorColor: purple,
+        selectedIndex: page,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        onDestinationSelected: _switchPage,
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.shopping_bag_outlined), label: 'Loja'),
+          NavigationDestination(icon: Icon(Icons.bolt_outlined), label: 'V-Bucks'),
+          NavigationDestination(icon: Icon(Icons.person_outline), label: 'Conta'),
+          NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Ajustes'),
         ],
       )),
     );
@@ -251,15 +156,15 @@ class _HomePageState extends State<HomePage> {
       ]);
 
   Widget _settings() => ListView(padding: const EdgeInsets.all(16), children: [
-        _heading('Ajustes', 'Informações da versão de teste.'),
+        _heading('Ajustes', 'Informações do aplicativo.'),
         const SizedBox(height: 12),
         _action('Abrir YouTube: Salve o Mundo', () => _open(youtubeSearch), icon: Icons.play_circle_outline),
         const SizedBox(height: 20),
         _card(child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.palette_outlined, color: lilac), title: Text('Tema'), subtitle: Text('Preto e roxo')),
-          ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.ads_click, color: lilac), title: Text('Anúncios'), subtitle: Text('Anúncios de teste; comerciais pendentes de aprovação e autorização')),
+          ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.ads_click, color: lilac), title: Text('Anúncios'), subtitle: Text('Nenhuma rede de anúncios está integrada nesta compilação')),
           ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.notifications_none, color: lilac), title: Text('Notificações'), subtitle: Text('Ainda não implementadas — exigem serviço de alertas')),
-          ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.info_outline, color: lilac), title: Text('Versão'), subtitle: Text('0.6.0 (preparacao de publicacao)')),
+          ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.info_outline, color: lilac), title: Text('Versão'), subtitle: Text('0.7.0 (sem AdMob)')),
         ])),
       ]);
 }

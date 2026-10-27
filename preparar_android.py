@@ -5,16 +5,11 @@ p = Path('android/app/src/main/AndroidManifest.xml')
 if not p.exists():
     raise SystemExit('Manifest nao encontrado. Execute flutter create antes.')
 s = p.read_text(encoding='utf-8')
-marker = 'com.google.android.gms.ads.APPLICATION_ID'
-if marker not in s:
-    live = os.environ.get('ENABLE_LIVE_ADS') == 'true'
-    app_id = 'ca-app-pub-2459248219163601~9796068658' if live else 'ca-app-pub-3940256099942544~3347511713'
-    insert = f'<meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="{app_id}" />'
-    s=s.replace('<application', '<application', 1)
-    start=s.index('<application')
-    end=s.index('>', start)
-    s=s[:end+1]+'\n        '+insert+s[end+1:]
-    p.write_text(s, encoding='utf-8')
+# Nenhum SDK/ID de publicidade neste build. Remove metadata herdada do AdMob,
+# caso a pasta android ja exista de uma geracao anterior.
+import re
+s = re.sub(r'\s*<meta-data\s+android:name=["\']com\.google\.android\.gms\.ads\.APPLICATION_ID["\'][^>]*?/?>', '', s)
+p.write_text(s, encoding='utf-8')
 # WebView precisa de acesso a internet no app Android, inclusive em release.
 s=p.read_text(encoding='utf-8')
 if 'android.permission.INTERNET' not in s:
@@ -26,4 +21,4 @@ strings.write_text('<resources><string name="app_name">Roxo Shop</string></resou
 # Adjust Android label reliably.
 s=p.read_text(encoding='utf-8').replace('android:label="roxo_shop"','android:label="Roxo Shop"').replace('android:label="shop_roxo"','android:label="Roxo Shop"')
 p.write_text(s,encoding='utf-8')
-print('Android Manifest preparado. LIVE ADS =', os.environ.get('ENABLE_LIVE_ADS') == 'true')
+print('Android Manifest preparado, sem AdMob.')
