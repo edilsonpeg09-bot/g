@@ -14,6 +14,14 @@ const panel = Color(0xFF18141F);
 const purple = Color(0xFF7C3AED);
 const lilac = Color(0xFFC084FC);
 const dim = Color(0xFFB8AEC6);
+// Por seguranca, anuncios comerciais permanecem desativados.
+// Somente habilitar mediante autorizacoes e aprovacao do app.
+const bool enableLiveAds = bool.fromEnvironment('ENABLE_LIVE_ADS', defaultValue: false);
+const String bannerTestId = 'ca-app-pub-3940256099942544/6300978111';
+const String interstitialTestId = 'ca-app-pub-3940256099942544/1033173712';
+const String bannerProductionId = 'ca-app-pub-2459248219163601/4839255446';
+// Ainda nao temos bloco intersticial comercial registrado: NAO ativar este formato em producao.
+const String interstitialProductionId = '';
 const fortniteShop = 'https://www.fortnite.com/item-shop';
 const fortniteDb = 'https://fortnitedb.com/';
 const epicTransactions = 'https://www.epicgames.com/account/transactions';
@@ -53,9 +61,9 @@ class _HomePageState extends State<HomePage> {
   DateTime? _lastInterstitial;
 
   void _loadInterstitial() {
-    if (_interstitial != null) return;
+    if (_interstitial != null || (enableLiveAds && interstitialProductionId.isEmpty)) return;
     InterstitialAd.load(
-      adUnitId: 'ca-app-pub-3940256099942544/1033173712',
+      adUnitId: enableLiveAds ? interstitialProductionId : interstitialTestId,
       request: const AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) {
@@ -102,7 +110,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _loadInterstitial();
     _banner = BannerAd(
-      adUnitId: 'ca-app-pub-3940256099942544/6300978111',
+      adUnitId: enableLiveAds ? bannerProductionId : bannerTestId,
       size: AdSize.banner,
       request: const AdRequest(),
       listener: BannerAdListener(
@@ -249,9 +257,9 @@ class _HomePageState extends State<HomePage> {
         const SizedBox(height: 20),
         _card(child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.palette_outlined, color: lilac), title: Text('Tema'), subtitle: Text('Preto e roxo')),
-          ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.ads_click, color: lilac), title: Text('Anúncios'), subtitle: Text('Banners e anúncios de tela cheia de teste — sem receita')),
+          ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.ads_click, color: lilac), title: Text('Anúncios'), subtitle: Text('Anúncios de teste; comerciais pendentes de aprovação e autorização')),
           ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.notifications_none, color: lilac), title: Text('Notificações'), subtitle: Text('Ainda não implementadas — exigem serviço de alertas')),
-          ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.info_outline, color: lilac), title: Text('Versão'), subtitle: Text('0.4.0 (teste)')),
+          ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.info_outline, color: lilac), title: Text('Versão'), subtitle: Text('0.6.0 (preparacao de publicacao)')),
         ])),
       ]);
 }

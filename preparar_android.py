@@ -1,12 +1,15 @@
 # Executar apos: flutter create --platforms=android --org com.roxoshop .
 from pathlib import Path
+import os
 p = Path('android/app/src/main/AndroidManifest.xml')
 if not p.exists():
     raise SystemExit('Manifest nao encontrado. Execute flutter create antes.')
 s = p.read_text(encoding='utf-8')
 marker = 'com.google.android.gms.ads.APPLICATION_ID'
 if marker not in s:
-    insert = '<meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3940256099942544~3347511713" />'
+    live = os.environ.get('ENABLE_LIVE_ADS') == 'true'
+    app_id = 'ca-app-pub-2459248219163601~9796068658' if live else 'ca-app-pub-3940256099942544~3347511713'
+    insert = f'<meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="{app_id}" />'
     s=s.replace('<application', '<application', 1)
     start=s.index('<application')
     end=s.index('>', start)
@@ -23,4 +26,4 @@ strings.write_text('<resources><string name="app_name">Roxo Shop</string></resou
 # Adjust Android label reliably.
 s=p.read_text(encoding='utf-8').replace('android:label="roxo_shop"','android:label="Roxo Shop"').replace('android:label="shop_roxo"','android:label="Roxo Shop"')
 p.write_text(s,encoding='utf-8')
-print('Android Manifest configurado com ID OFICIAL DE TESTE do AdMob.')
+print('Android Manifest preparado. LIVE ADS =', os.environ.get('ENABLE_LIVE_ADS') == 'true')
