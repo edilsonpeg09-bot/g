@@ -18,3 +18,31 @@ workflows:
         script: flutter build apk --debug --dart-define=ENABLE_LEVELPLAY_ADS=true
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
+
+  roxo-shop-v08-release-assinada:
+    name: Roxo Shop v0.8 - release assinada (revisao final)
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
+      android_signing:
+        - roxo_shop_release
+    scripts:
+      - name: Verificar liberacao de publicacao
+        script: |
+          if [ "${RELEASE_COMPLIANCE_APPROVED:-}" != "yes" ]; then
+            echo "PUBLICACAO BLOQUEADA: concluir CMP/privacidade, autorizacoes e revisao comercial. So apos isso configure RELEASE_COMPLIANCE_APPROVED=yes no Codemagic."
+            exit 1
+          fi
+      - name: Criar plataforma Android
+        script: flutter create --platforms=android --org com.roxoshop .
+      - name: Preparar Android e assinatura release
+        script: python3 preparar_android.py
+      - name: Resolver dependencias
+        script: flutter pub get
+      - name: Criar icone
+        script: dart run flutter_launcher_icons
+      - name: Compilar APK release com anuncios
+        script: flutter build apk --release --dart-define=ENABLE_LEVELPLAY_ADS=true
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk

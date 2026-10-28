@@ -23,4 +23,33 @@ if settings.exists():
     x=settings.read_text()
     x=re.sub(r'id\("org.jetbrains.kotlin.android"\) version "[^"]+"', 'id("org.jetbrains.kotlin.android") version "2.2.20"', x)
     settings.write_text(x)
+
+# Assinatura release: usa somente credenciais fornecidas pelo Codemagic.
+# Nunca grave senhas ou o keystore no repositorio.
+if p.suffix == '.kts':
+    x = p.read_text()
+    marker = 'signingConfigs {'
+    if 'CM_KEYSTORE_PATH' not in x:
+        signing = '''
+    signingConfigs {
+        create("release") {
+            val ksPath = System.getenv("CM_KEYSTORE_PATH")
+            if (!ksPath.isNullOrBlank()) {
+                storeFile = file(ksPath)
+                storePassword = System.getenv("CM_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("CM_KEY_ALIAS")
+                keyPassword = System.getenv("CM_KEY_PASSWORD")
+            }
+        }
+    }
+    '''
+        x = re.sub(r'android\s*\{', lambda m: m.group(0) + signing, x, count=1)
+        x = x.replace('signingConfig = signingConfigs.getByName("debug")', 'signingConfig = signingConfigs.getByName("release")')
+        if 'signingConfig = signingConfigs.getByName("release")' not in x:
+            raise SystemExit('Nao foi encontrado buildTypes.release no template Android; confira o log.')
+        p.write_text(x)
+else:
+    if 'CM_KEYSTORE_PATH' not in x:
+        raise SystemExit('Template Gradle Groovy exige configurar assinatura release manualmente.')
+
 print('Android preparado para LevelPlay + Unity Ads, sem AdMob SDK.')
