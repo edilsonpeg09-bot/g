@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:unity_levelplay_mediation/unity_levelplay_mediation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -6,6 +8,12 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const RoxoShopApp());
 }
+
+// Habilitar apenas em testes com dispositivo registrado na Unity e consentimento adequado.
+const bool enableLevelPlayAds = bool.fromEnvironment('ENABLE_LEVELPLAY_ADS', defaultValue: false);
+const String levelPlayAppKey = '290e20bc5';
+const String levelPlayBannerId = 'yahaf9udspaqh4vl';
+const String levelPlayInterstitialId = '9w0c1k53wxx84mku';
 
 const bg = Color(0xFF09090F);
 const panel = Color(0xFF18141F);
@@ -42,10 +50,63 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage>
+    implements LevelPlayInitListener {
+  bool _adsReady = false;
+  int _navigationChanges = 0;
+  DateTime? _lastInterstitial;
+  LevelPlayInterstitialAd? _interstitial;
+  final GlobalKey<LevelPlayBannerAdViewState> _bannerKey = GlobalKey<LevelPlayBannerAdViewState>();
+
+  @override
+  void initState() {
+    super.initState();
+    if (enableLevelPlayAds) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _initAds());
+    }
+  }
+
+  Future<void> _initAds() async {
+    try {
+      final request = LevelPlayInitRequest.builder(levelPlayAppKey).build();
+      await LevelPlay.init(initRequest: request, initListener: this);
+    } on PlatformException catch (e) {
+      debugPrint('LevelPlay init failed: $e');
+    }
+  }
+
+  @override
+  void onInitSuccess(LevelPlayConfiguration configuration) {
+    if (!mounted) return;
+    _interstitial = LevelPlayInterstitialAd(adUnitId: levelPlayInterstitialId);
+    _interstitial!.setListener(_RoxoInterstitialListener(_interstitial!));
+    _interstitial!.loadAd();
+    setState(() => _adsReady = true);
+  }
+
+  @override
+  void onInitFailed(LevelPlayInitError error) {
+    debugPrint('LevelPlay init error: $error');
+  }
+
+  void _maybeShowInterstitial() {
+    if (!_adsReady || _interstitial == null) return;
+    _navigationChanges++;
+    if (_navigationChanges % 4 != 0) return;
+    final now = DateTime.now();
+    if (_lastInterstitial != null && now.difference(_lastInterstitial!).inMinutes < 5) return;
+    if (_interstitial!.isAdReady()) {
+      _lastInterstitial = now;
+      _interstitial!.showAd();
+    }
+  }
+
   int page = 0;
   void _switchPage(int value) {
-    if (value != page) setState(() => page = value);
+    if (value != page) {
+      setState(() => page = value);
+      _maybeShowInterstitial();
+    }
   }
 
   Future<void> _open(String url) async {
@@ -108,7 +169,16 @@ class _HomePageState extends State<HomePage> {
           _account(), _settings(),
         ]),
       ))),
-      bottomNavigationBar: SafeArea(top: false, child: NavigationBar(
+      bottomNavigationBar: Column(mainAxisSize: MainAxisSize.min, children: [
+        if (enableLevelPlayAds && _adsReady)
+          SizedBox(height: 50, width: 320, child: LevelPlayBannerAdView(
+            key: _bannerKey,
+            adUnitId: levelPlayBannerId,
+            adSize: LevelPlayAdSize.BANNER,
+            listener: _RoxoBannerListener(),
+            onPlatformViewCreated: () => _bannerKey.currentState?.loadAd(),
+          )),
+        SafeArea(top: false, child: NavigationBar(
         height: 74,
         backgroundColor: panel,
         indicatorColor: purple,
@@ -122,6 +192,7 @@ class _HomePageState extends State<HomePage> {
           NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Ajustes'),
         ],
       )),
+      ]),
     );
   }
 
@@ -162,9 +233,9 @@ class _HomePageState extends State<HomePage> {
         const SizedBox(height: 20),
         _card(child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.palette_outlined, color: lilac), title: Text('Tema'), subtitle: Text('Preto e roxo')),
-          ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.ads_click, color: lilac), title: Text('Anúncios'), subtitle: Text('Nenhuma rede de anúncios está integrada nesta compilação')),
+          ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.ads_click, color: lilac), title: Text('Anúncios'), subtitle: Text(enableLevelPlayAds ? 'Unity LevelPlay habilitado para testes' : 'Anúncios desativados nesta compilação')),
           ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.notifications_none, color: lilac), title: Text('Notificações'), subtitle: Text('Ainda não implementadas — exigem serviço de alertas')),
-          ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.info_outline, color: lilac), title: Text('Versão'), subtitle: Text('0.7.0 (sem AdMob)')),
+          ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.info_outline, color: lilac), title: Text('Versão'), subtitle: Text('0.8.0 (Unity LevelPlay)')),
         ])),
       ]);
 }
@@ -292,4 +363,28 @@ class _EmbeddedSitePageState extends State<EmbeddedSitePage> {
       ])),
     ],
   );
+}
+
+// Listeners separados: API do banner e do intersticial usam assinaturas diferentes.
+class _RoxoInterstitialListener implements LevelPlayInterstitialAdListener {
+  final LevelPlayInterstitialAd ad;
+  _RoxoInterstitialListener(this.ad);
+  @override void onAdLoaded(LevelPlayAdInfo adInfo) {}
+  @override void onAdLoadFailed(LevelPlayAdError error) { debugPrint('Interstitial load: $error'); }
+  @override void onAdDisplayed(LevelPlayAdInfo adInfo) {}
+  @override void onAdDisplayFailed(LevelPlayAdError error, LevelPlayAdInfo adInfo) {}
+  @override void onAdClicked(LevelPlayAdInfo adInfo) {}
+  @override void onAdClosed(LevelPlayAdInfo adInfo) { ad.loadAd(); }
+  @override void onAdInfoChanged(LevelPlayAdInfo adInfo) {}
+}
+
+class _RoxoBannerListener implements LevelPlayBannerAdViewListener {
+  @override void onAdLoaded(LevelPlayAdInfo adInfo) {}
+  @override void onAdLoadFailed(LevelPlayAdError error) { debugPrint('Banner load: $error'); }
+  @override void onAdDisplayed(LevelPlayAdInfo adInfo) {}
+  @override void onAdDisplayFailed(LevelPlayAdInfo adInfo, LevelPlayAdError error) {}
+  @override void onAdClicked(LevelPlayAdInfo adInfo) {}
+  @override void onAdExpanded(LevelPlayAdInfo adInfo) {}
+  @override void onAdCollapsed(LevelPlayAdInfo adInfo) {}
+  @override void onAdLeftApplication(LevelPlayAdInfo adInfo) {}
 }

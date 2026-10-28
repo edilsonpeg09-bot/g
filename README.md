@@ -1,11 +1,27 @@
-# Roxo Shop v0.7 — Sem AdMob de teste
+# Roxo Shop v0.8 — integração Unity LevelPlay (código-fonte para teste)
 
-Fonte Flutter atualizada: o SDK `google_mobile_ads`, os IDs e a lógica de banners/intersticiais foram removidos. Não há anúncios comerciais ou de teste nesta versão. A integração Unity LevelPlay **ainda não foi adicionada**; para ela, precisamos da App Key, das unidades criadas e da validação de elegibilidade/comercialização.
+Este projeto mantém as telas Loja, Salve o Mundo (FortniteDB), Minha Conta e Ajustes. O antigo AdMob não foi reincorporado.
 
-Mantidos: Loja e FortniteDB via WebView, Minha Conta, YouTube e tema preto e roxo.
+## O que mudou
+- Plugin oficial Flutter `unity_levelplay_mediation ^9.4.0`.
+- IDs do LevelPlay (App Key, Banner e Intersticial) configurados.
+- Adaptador Unity Ads 5.15.0 e dependências Google Play Services de identificação (não é AdMob).
+- Banner fixo, fora da WebView, e intersticial em transições naturais (máximo uma vez a cada cinco minutos e quatro mudanças de aba).
+- `ENABLE_LEVELPLAY_ADS` desativado por padrão; workflow de **teste** o ativa.
 
-## Gerar APK para testes no Codemagic
+## Importante antes dos testes
+1. Adicione o celular em LevelPlay > Dispositivos de teste e use o modo de testes para evitar impressões inválidas.
+2. Confirme o cumprimento de COPPA, LGPD, GDPR/EEA e consentimento de anúncios aplicável antes de qualquer distribuição ampla. Este protótipo **não implementa uma CMP**.
+3. Tenha autorização para monetização do conteúdo Fortnite e de terceiros. O acesso via WebView pode ter restrições de terceiros.
+4. Compile no Codemagic com o workflow `roxo-shop-unity-v08-teste`. O APK gerado é **debug**, não é APK assinado para publicação.
+5. A versão do plugin requer Kotlin 2.0+; `preparar_android.py` ajusta o Kotlin em projetos gerados com `settings.gradle.kts`.
+6. Se o build falhar ou as classes de Flutter plugin mudarem, conferir a saída do Codemagic e ajustar antes de distribuir. Não houve compilação validada neste ambiente.
 
-Extraia o ZIP, envie os arquivos para a raiz do GitHub e confirme o commit. Rode o workflow de teste existente. O resultado esperado é `app-debug.apk` na área Artifacts, se o build passar.
+## Compilar sem habilitar anúncios
+`flutter build apk --debug` (a flag assume `false`).
 
-**Importante:** ainda não é um APK de produção assinado. A inclusão dos identificadores Unity não é suficiente sem SDK, rede de demanda habilitada, consentimento adequado e aprovação. Verifique direitos comerciais para Fortnite/FortniteDB antes de monetizar.
+## Compilar no ambiente de teste
+`flutter build apk --debug --dart-define=ENABLE_LEVELPLAY_ADS=true`
+
+## Publicação
+O projeto original não traz keystore de produção nem Android configurado. Antes de publicar, integrar consentimento/privacidade, criar assinatura de release, validar conteúdo e testar APK em aparelho. Não suba senhas, keystores ou credenciais privadas ao GitHub.

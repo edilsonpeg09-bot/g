@@ -1,24 +1,26 @@
-# Executar apos: flutter create --platforms=android --org com.roxoshop .
 from pathlib import Path
-import os
-p = Path('android/app/src/main/AndroidManifest.xml')
-if not p.exists():
-    raise SystemExit('Manifest nao encontrado. Execute flutter create antes.')
-s = p.read_text(encoding='utf-8')
-# Nenhum SDK/ID de publicidade neste build. Remove metadata herdada do AdMob,
-# caso a pasta android ja exista de uma geracao anterior.
 import re
-s = re.sub(r'\s*<meta-data\s+android:name=["\']com\.google\.android\.gms\.ads\.APPLICATION_ID["\'][^>]*?/?>', '', s)
-p.write_text(s, encoding='utf-8')
-# WebView precisa de acesso a internet no app Android, inclusive em release.
-s=p.read_text(encoding='utf-8')
-if 'android.permission.INTERNET' not in s:
-    s=s.replace('<application', '<uses-permission android:name="android.permission.INTERNET" />\n    <application', 1)
-    p.write_text(s, encoding='utf-8')
-strings = Path('android/app/src/main/res/values/strings.xml')
-strings.parent.mkdir(parents=True,exist_ok=True)
-strings.write_text('<resources><string name="app_name">Roxo Shop</string></resources>\n',encoding='utf-8')
-# Adjust Android label reliably.
-s=p.read_text(encoding='utf-8').replace('android:label="roxo_shop"','android:label="Roxo Shop"').replace('android:label="shop_roxo"','android:label="Roxo Shop"')
-p.write_text(s,encoding='utf-8')
-print('Android Manifest preparado, sem AdMob.')
+manifest=Path('android/app/src/main/AndroidManifest.xml')
+if not manifest.exists(): raise SystemExit('Execute flutter create --platforms=android --org com.roxoshop .')
+s=manifest.read_text()
+s=re.sub(r'\s*<meta-data\s+android:name=["\']com\.google\.android\.gms\.ads\.APPLICATION_ID["\'][^>]*?/?>','',s)
+for permission in ('android.permission.INTERNET','android.permission.ACCESS_NETWORK_STATE','com.google.android.gms.permission.AD_ID'):
+    if permission not in s: s=s.replace('<application',f'<uses-permission android:name="{permission}" />\n    <application',1)
+s=s.replace('android:label="roxo_shop"','android:label="Roxo Shop"')
+manifest.write_text(s)
+root=Path('android/app')
+files=list(root.glob('build.gradle*'))
+if not files: raise SystemExit('Gradle app-level ausente')
+p=files[0]; x=p.read_text()
+if 'unityads-adapter' not in x:
+    if p.suffix=='.kts':
+        deps='''\ndependencies {\n    implementation("com.unity3d.ads-mediation:unityads-adapter:5.15.0")\n    implementation("com.google.android.gms:play-services-ads-identifier:18.2.0")\n    implementation("com.google.android.gms:play-services-appset:16.1.0")\n}\n'''
+    else:
+        deps="""\ndependencies {\n    implementation 'com.unity3d.ads-mediation:unityads-adapter:5.15.0'\n    implementation 'com.google.android.gms:play-services-ads-identifier:18.2.0'\n    implementation 'com.google.android.gms:play-services-appset:16.1.0'\n}\n"""
+    p.write_text(x+deps)
+settings=Path('android/settings.gradle.kts')
+if settings.exists():
+    x=settings.read_text()
+    x=re.sub(r'id\("org.jetbrains.kotlin.android"\) version "[^"]+"', 'id("org.jetbrains.kotlin.android") version "2.1.20"', x)
+    settings.write_text(x)
+print('Android preparado para LevelPlay + Unity Ads, sem AdMob SDK.')

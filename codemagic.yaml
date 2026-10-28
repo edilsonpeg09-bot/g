@@ -1,6 +1,6 @@
 workflows:
-  roxo-shop-android-teste:
-    name: Roxo Shop - Android APK de teste
+  roxo-shop-unity-v08-teste:
+    name: Roxo Shop v0.8 - Unity LevelPlay (teste)
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
@@ -8,13 +8,13 @@ workflows:
     scripts:
       - name: Criar plataforma Android
         script: flutter create --platforms=android --org com.roxoshop .
-      - name: Preparar Android e AdMob de teste
+      - name: Preparar Android, SDK e adaptador
         script: python3 preparar_android.py
-      - name: Instalar dependencias
+      - name: Resolver dependencias
         script: flutter pub get
-      - name: Gerar icone
+      - name: Criar icone
         script: dart run flutter_launcher_icons
-      - name: Compilar APK de teste
-        script: flutter build apk --debug
+      - name: Compilar APK DEBUG para dispositivo de teste
+        script: flutter build apk --debug --dart-define=ENABLE_LEVELPLAY_ADS=true
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
