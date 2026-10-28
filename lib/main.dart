@@ -89,15 +89,20 @@ class _HomePageState extends State<HomePage>
     debugPrint('LevelPlay init error: $error');
   }
 
-  void _maybeShowInterstitial() {
-    if (!_adsReady || _interstitial == null) return;
+  Future<void> _maybeShowInterstitial() async {
+    final ad = _interstitial;
+    if (!_adsReady || ad == null) return;
     _navigationChanges++;
     if (_navigationChanges % 4 != 0) return;
     final now = DateTime.now();
     if (_lastInterstitial != null && now.difference(_lastInterstitial!).inMinutes < 5) return;
-    if (_interstitial!.isAdReady()) {
-      _lastInterstitial = now;
-      _interstitial!.showAd();
+    try {
+      final isReady = await ad.isAdReady();
+      if (!mounted || !isReady) return;
+      _lastInterstitial = DateTime.now();
+      await ad.showAd();
+    } on PlatformException catch (e) {
+      debugPrint('LevelPlay interstitial failed: $e');
     }
   }
 
