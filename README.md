@@ -25,3 +25,7 @@ Este projeto mantém as telas Loja, Salve o Mundo (FortniteDB), Minha Conta e Aj
 
 ## Publicação
 O projeto original não traz keystore de produção nem Android configurado. Antes de publicar, integrar consentimento/privacidade, criar assinatura de release, validar conteúdo e testar APK em aparelho. Não suba senhas, keystores ou credenciais privadas ao GitHub.
+
+
+## Correção Kotlin / Codemagic
+Este pacote altera `preparar_android.py` para configurar Kotlin 2.2.20 (mínimo exigido pelo Flutter do build de 28/10/2026). Substitua o arquivo no GitHub e execute o build novamente. Este ajuste não é garantia de build final: examine os logs e valide a execução no dispositivo.

@@ -21,6 +21,6 @@ if 'unityads-adapter' not in x:
 settings=Path('android/settings.gradle.kts')
 if settings.exists():
     x=settings.read_text()
-    x=re.sub(r'id\("org.jetbrains.kotlin.android"\) version "[^"]+"', 'id("org.jetbrains.kotlin.android") version "2.1.20"', x)
+    x=re.sub(r'id\("org.jetbrains.kotlin.android"\) version "[^"]+"', 'id("org.jetbrains.kotlin.android") version "2.2.20"', x)
     settings.write_text(x)
 print('Android preparado para LevelPlay + Unity Ads, sem AdMob SDK.')
